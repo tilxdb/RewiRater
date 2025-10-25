@@ -1,0 +1,199 @@
+РАЗВЕРТЫВАНИЕ REWIRATER НА TIMEWEB CLOUD
+
+ПОШАГОВОЕ РУКОВОДСТВО
+
+1. ПОДГОТОВКА ФАЙЛОВ
+
+Что нужно загрузить на сервер:
+- main.py (основной файл)
+- config.py (с вашими API ключами)
+- requirements.txt (зависимости)
+- папка ai/ (AI модули)
+- папка bot/ (Telegram бот)
+- папка utils/ (утилиты)
+- папка twitter/ (Twitter бот)
+
+Что НЕ загружать:
+- *.session файлы (создадутся на сервере)
+- папка logs/ (создастся автоматически)
+- папка data/ (создастся автоматически)
+- __pycache__/ (кэш Python)
+
+2. ПОДКЛЮЧЕНИЕ К СЕРВЕРУ
+
+Через SSH:
+ssh root@ваш-ip-адрес
+
+Или через веб-консоль Timeweb:
+- Зайдите в панель управления
+- Откройте консоль сервера
+
+3. УСТАНОВКА ЗАВИСИМОСТЕЙ
+
+Обновление системы:
+sudo apt update && sudo apt upgrade -y
+
+Установка Python:
+sudo apt install python3 python3-pip python3-venv git htop -y
+
+4. ЗАГРУЗКА ПРОЕКТА
+
+Создание директории:
+mkdir -p /home/ubuntu/rewirater
+cd /home/ubuntu/rewirater
+
+Загрузка файлов (через SCP или веб-интерфейс):
+scp -r /путь/к/проекту/* root@ваш-ip:/home/ubuntu/rewirater/
+
+5. НАСТРОЙКА PYTHON
+
+Создание виртуального окружения:
+python3 -m venv rewirater_env
+source rewirater_env/bin/activate
+
+Установка зависимостей:
+pip install --upgrade pip
+pip install -r requirements.txt
+
+6. ПЕРВЫЙ ЗАПУСК
+
+Запуск бота (создание сессии):
+python3 main.py
+
+При первом запуске:
+- Введите номер телефона
+- Введите код подтверждения
+- Сессия сохранится автоматически
+
+7. НАСТРОЙКА АВТОЗАПУСКА
+
+Создание systemd сервиса:
+sudo nano /etc/systemd/system/rewirater.service
+
+Содержимое файла:
+[Unit]
+Description=RewiRater Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/rewirater
+Environment=PATH=/home/ubuntu/rewirater/rewirater_env/bin
+ExecStart=/home/ubuntu/rewirater/rewirater_env/bin/python3 main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+Активация сервиса:
+sudo systemctl daemon-reload
+sudo systemctl enable rewirater
+sudo systemctl start rewirater
+
+8. ПРОВЕРКА РАБОТЫ
+
+Проверка статуса:
+sudo systemctl status rewirater
+
+Просмотр логов:
+sudo journalctl -u rewirater -f
+
+Проверка процессов:
+ps aux | grep python
+
+9. УПРАВЛЕНИЕ БОТОМ
+
+Запуск:
+sudo systemctl start rewirater
+
+Остановка:
+sudo systemctl stop rewirater
+
+Перезапуск:
+sudo systemctl restart rewirater
+
+Проверка статуса:
+sudo systemctl status rewirater
+
+10. МОНИТОРИНГ
+
+Просмотр логов в реальном времени:
+sudo journalctl -u rewirater -f
+
+Просмотр логов приложения:
+tail -f rewirater.log
+
+Проверка ресурсов:
+htop
+
+Проверка места на диске:
+df -h
+
+11. РЕЗЕРВНОЕ КОПИРОВАНИЕ
+
+Создание скрипта бэкапа:
+nano backup.sh
+
+Содержимое:
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+tar -czf /home/ubuntu/backups/rewirater_$DATE.tar.gz \
+    --exclude='*.session' \
+    --exclude='logs/' \
+    --exclude='data/' \
+    /home/ubuntu/rewirater/
+
+chmod +x backup.sh
+
+Автоматический бэкап (ежедневно в 2:00):
+(crontab -l 2>/dev/null; echo "0 2 * * * /home/ubuntu/rewirater/backup.sh") | crontab -
+
+12. БЕЗОПАСНОСТЬ
+
+Настройка файрвола:
+sudo ufw allow ssh
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
+
+Права доступа:
+chmod 600 config.py
+chmod 644 main.py
+chmod 755 ai/ bot/ utils/ twitter/
+
+13. РЕШЕНИЕ ПРОБЛЕМ
+
+Проблема: Бот не запускается
+Решение:
+sudo journalctl -u rewirater -n 50
+ls -la /home/ubuntu/rewirater/
+python3 --version
+
+Проблема: Ошибки API
+Решение:
+cat config.py | grep API
+ping google.com
+
+Проблема: Сессия заблокирована
+Решение:
+rm -f *.session *.session-journal
+sudo systemctl restart rewirater
+
+14. ПРОВЕРКА ГОТОВНОСТИ
+
+После выполнения всех шагов проверьте:
+- sudo systemctl status rewirater (должен быть active)
+- ps aux | grep python (должен быть процесс)
+- tail -f rewirater.log (должны быть логи)
+
+15. ГОТОВО!
+
+Ваш бот теперь:
+- Автоматически запускается при перезагрузке
+- Перезапускается при сбоях
+- Логирует все действия
+- Работает 24/7
+
+Удачного развертывания!

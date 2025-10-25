@@ -1,0 +1,26 @@
+# Telegram API данные (получить на https://my.telegram.org)
+TELEGRAM_API_ID=your_api_id_here
+TELEGRAM_API_HASH=your_api_hash_here
+
+# ID каналов-источников для парсинга (через запятую)
+SOURCE_CHANNELS=-1812865083
+
+# Целевой канал для публикации переработанных постов
+TARGET_CHANNEL=@twitterweb3
+
+# AI API ключ (OpenAI, Anthropic, DeepSeek или другой провайдер)
+AI_API_KEY=your_deepseek_api_key_here
+
+# Провайдер AI (openai, anthropic, deepseek, local)
+AI_PROVIDER=deepseek
+
+# Модель AI (deepseek-chat, deepseek-coder, gpt-4, claude-3-sonnet и т.д.)
+AI_MODEL=deepseek-chat
+
+# Настройки публикации
+POST_INTERVAL_MINUTES=60
+MAX_POSTS_PER_DAY=24
+
+# Настройки контента
+POST_LENGTH=medium
+CONTENT_TYPE=mixed

@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Telegram Session Files (КРИТИЧЕСКИ ВАЖНО!)
+*.session
+*.session-journal
+sessions/
+
+# API Keys and Secrets (КРИТИЧЕСКИ ВАЖНО!)
+.env
+config.py
+config_local.py
+secrets.py
+api_keys.txt
+
+# Logs
+*.log
+logs/
+data/
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Test files
+test_*.py
+*_test.py
+
+# Documentation drafts
+docs/draft/
+docs/temp/
+
+# Backup files
+*.bak
+*.backup

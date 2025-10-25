@@ -1,0 +1,114 @@
+КАК ДОБАВИТЬ НОВЫЙ КАНАЛ В МОНИТОРИНГ
+
+ПОШАГОВАЯ ИНСТРУКЦИЯ
+
+1. ОТКРОЙТЕ ФАЙЛ config.py
+   - Найдите раздел SOURCE_CHANNELS
+   - Это список каналов для мониторинга
+
+2. ДОБАВЬТЕ НОВЫЙ КАНАЛ
+   - Добавьте канал в список в формате "@username"
+   - Пример: "@new_channel_name"
+   - Поставьте запятую после предыдущего канала
+
+3. ПРИМЕР ДОБАВЛЕНИЯ:
+
+БЫЛО:
+SOURCE_CHANNELS: List[str] = [
+    "@dubaieth",
+    "@tonlive",
+    "@tonraffles_ru", 
+    "@MyTonWalletRu",
+    "@tonkeeper_ru",
+    "@durov",
+    "@ston_fi_ru",
+    "@dedust_ru",
+    "@x1000News",
+    "@tginfo",
+    "@tonmonitoring",
+    "@kokoronoki_group",
+    "@upscale_news_ru",
+    "@xrocketnewsru",
+    "@CryptoBotRU"
+]
+
+СТАЛО (добавили @new_channel):
+SOURCE_CHANNELS: List[str] = [
+    "@dubaieth",
+    "@tonlive",
+    "@tonraffles_ru", 
+    "@MyTonWalletRu",
+    "@tonkeeper_ru",
+    "@durov",
+    "@ston_fi_ru",
+    "@dedust_ru",
+    "@x1000News",
+    "@tginfo",
+    "@tonmonitoring",
+    "@kokoronoki_group",
+    "@upscale_news_ru",
+    "@xrocketnewsru",
+    "@CryptoBotRU",
+    "@new_channel"
+]
+
+4. СОХРАНИТЕ ФАЙЛ
+   - Нажмите Ctrl+S
+   - Убедитесь что файл сохранен
+
+5. ПЕРЕЗАПУСТИТЕ БОТА
+   - Остановите текущий процесс (Ctrl+C)
+   - Запустите заново: python main.py
+   - Бот начнет мониторить новый канал
+
+ВАЖНЫЕ МОМЕНТЫ:
+
+- КАНАЛ ДОЛЖЕН БЫТЬ ПУБЛИЧНЫМ
+- БОТ ДОЛЖЕН ИМЕТЬ ДОСТУП К КАНАЛУ
+- ИСПОЛЬЗУЙТЕ ТОЧНЫЙ USERNAME (с @)
+- НЕ ЗАБУДЬТЕ ЗАПЯТУЮ ПОСЛЕ ПРЕДЫДУЩЕГО КАНАЛА
+
+ПРОВЕРКА РАБОТЫ:
+
+1. Запустите бота
+2. Посмотрите логи - должно появиться сообщение о доступе к каналу
+3. Если канал недоступен - проверьте правильность написания
+4. Если все ОК - бот начнет переписывать посты из нового канала
+
+УДАЛЕНИЕ КАНАЛА:
+
+Чтобы убрать канал из мониторинга:
+1. Удалите строку с каналом из списка
+2. Уберите запятую после предыдущего канала
+3. Перезапустите бота
+
+ПРИМЕР УДАЛЕНИЯ:
+
+БЫЛО:
+"@tonmonitoring",
+"@kokoronoki_group",
+
+СТАЛО:
+"@tonmonitoring"
+
+(убрали @kokoronoki_group и запятую)
+
+ТЕКУЩИЙ СПИСОК КАНАЛОВ:
+
+1. @dubaieth
+2. @tonlive
+3. @tonraffles_ru
+4. @MyTonWalletRu
+5. @tonkeeper_ru
+6. @durov
+7. @ston_fi_ru
+8. @dedust_ru
+9. @x1000News
+10. @tginfo
+11. @tonmonitoring
+12. @kokoronoki_group
+13. @upscale_news_ru
+14. @xrocketnewsru
+15. @CryptoBotRU
+
+ГОТОВО! Теперь вы знаете как добавлять и удалять каналы.
