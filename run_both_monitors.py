@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Запуск Telegram и Twitter мониторов одновременно
+Запуск Telegram монитора
 """
 
 import asyncio
@@ -33,38 +33,24 @@ async def run_telegram_bot():
     except Exception as e:
         logger.error(f"❌ Ошибка Telegram бота: {e}")
 
-async def run_twitter_monitor():
-    """Запуск Twitter монитора"""
-    try:
-        logger.info("🚀 Запуск Twitter монитора...")
-        
-        from twitter.twitter_monitor_standalone import TwitterMonitorStandalone
-        monitor = TwitterMonitorStandalone()
-        await monitor.start()
-        
-    except Exception as e:
-        logger.error(f"❌ Ошибка Twitter монитора: {e}")
-
 async def main():
-    """Главная функция - запуск обоих мониторов"""
-    logger.info("🎯 Запуск Telegram и Twitter мониторов одновременно")
+    """Главная функция - запуск Telegram монитора"""
+    logger.info("🎯 Запуск Telegram монитора")
     
-    # Создаем задачи для обоих мониторов
+    # Создаем задачу для Telegram монитора
     telegram_task = asyncio.create_task(run_telegram_bot())
-    twitter_task = asyncio.create_task(run_twitter_monitor())
     
-    # Ждем завершения обеих задач
+    # Ждем завершения задачи
     try:
-        await asyncio.gather(telegram_task, twitter_task)
+        await telegram_task
     except KeyboardInterrupt:
         logger.info("👋 Получен сигнал остановки")
-        # Отменяем задачи
+        # Отменяем задачу
         telegram_task.cancel()
-        twitter_task.cancel()
         
         # Ждем завершения отмены
         try:
-            await asyncio.gather(telegram_task, twitter_task, return_exceptions=True)
+            await asyncio.gather(telegram_task, return_exceptions=True)
         except Exception:
             pass
 
@@ -72,6 +58,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.info("👋 Мониторы остановлены пользователем")
+        logger.info("👋 Монитор остановлен пользователем")
     except Exception as e:
         logger.error(f"💥 Фатальная ошибка: {e}")

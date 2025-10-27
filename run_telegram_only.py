@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Запуск только Telegram бота (без Twitter)
+Запуск только Telegram бота
 """
 
 import asyncio
@@ -21,11 +21,9 @@ logger = setup_logger()
 async def main():
     """Главная функция"""
     try:
-        logger.info("🚀 Запуск только Telegram бота (Twitter отключен)")
+        logger.info("🚀 Запуск Telegram бота")
         
         config = Config()
-        # Временно отключаем Twitter
-        config.TWITTER_MONITORING_ENABLED = False
         
         content_rewriter = ContentRewriter(config)
         await content_rewriter.setup_ai_clients()

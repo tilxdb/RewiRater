@@ -34,7 +34,7 @@ class SourcePost:
     media_type: Optional[str] = None  # 'photo', 'video', 'document', 'animation'
     media_object: Optional[Any] = None  # Объект медиа из Telegram
     media_url: Optional[str] = None  # URL медиа файла
-    source_type: str = "telegram"  # telegram, twitter
+    source_type: str = "telegram"  # telegram
     original_url: Optional[str] = None  # Оригинальная ссылка на пост
 
 @dataclass
@@ -145,11 +145,8 @@ class ContentRewriter:
             # Убираем хештеги и подпись, если нейросеть их добавила
             cleaned_text = self._remove_hashtags_from_text(cleaned_text)
             
-            # Форматируем финальный пост в зависимости от источника
-            if source_post.source_type == "twitter":
-                final_text = self._format_twitter_post(cleaned_text, [], source_post.original_url)
-            else:
-                final_text = self._format_simple_post(cleaned_text, [])
+            # Форматируем финальный пост
+            final_text = self._format_simple_post(cleaned_text, [])
             
             processing_time = time.time() - start_time
             
@@ -305,7 +302,7 @@ class ContentRewriter:
 - Если исходный пост короткий - 1-2 абзаца
 - Только ключевая информация
 - Краткий жирный заголовок
-- Заканчивай подписью @ton_boom
+- Подпись @SatoshiNakamoTON добавляется автоматически
 
 🗣 ЯЗЫК И ТОН:
 - Строгий профессиональный тон
@@ -339,7 +336,7 @@ class ContentRewriter:
 - Если исходный пост короткий - 1-2 абзаца
 - ТОЛЬКО ключевая информация
 - БЕЗ лишних комментариев
-- НЕ ДОБАВЛЯЙ подпись @ton_boom в конце поста - она будет добавлена автоматически
+- НЕ ДОБАВЛЯЙ подпись @SatoshiNakamoTON в конце поста - она будет добавлена автоматически
 - НЕ ЗАДАВАЙ вопросы аудитории в конце поста
 - НЕ ИСПОЛЬЗУЙ "p.s." или дополнительные приписки
 - ДЕЛАЙ посты ЧЕТКИМИ и ИНФОРМАТИВНЫМИ
@@ -394,7 +391,7 @@ class ContentRewriter:
         return emoji_pattern.sub('', text)
     
     def _remove_hashtags_from_text(self, text: str) -> str:
-        """Удаляет хештеги, эмодзи и подпись @ton_boom из текста, если нейросеть их добавила"""
+        """Удаляет хештеги, эмодзи из текста, если нейросеть их добавила"""
         import re
         
         # Сначала удаляем эмодзи
@@ -406,8 +403,8 @@ class ContentRewriter:
         
         for line in lines:
             line = line.strip()
-            # Если строка содержит только хештеги (начинается с #) или подпись @ton_boom, пропускаем её
-            if line and (all(word.startswith('#') for word in line.split()) or line.startswith('@ton_boom')):
+            # Если строка содержит только хештеги (начинается с #) или подпись @SatoshiNakamoTON, пропускаем её
+            if line and (all(word.startswith('#') for word in line.split()) or line.startswith('@SatoshiNakamoTON')):
                 continue
             cleaned_lines.append(line)
         
@@ -421,19 +418,9 @@ class ContentRewriter:
     
     def _format_simple_post(self, text: str, hashtags: List[str]) -> str:
         """Простое форматирование поста без эмодзи"""
-        # Добавляем подпись @ton_boom в конец
-        return f"{text}\n\n@ton_boom"
+        # Добавляем подпись @SatoshiNakamoTON в конец
+        return f"{text}\n\n@SatoshiNakamoTON"
     
-    def _format_twitter_post(self, text: str, hashtags: List[str], original_url: Optional[str] = None) -> str:
-        """Форматирование Twitter поста с указанием источника"""
-        # Убираем эмодзи из текста
-        clean_text = self._remove_emojis_from_text(text)
-        
-        # Добавляем подпись и источник
-        signature = "@ton_boom"
-        source_info = f"Источник: {original_url}" if original_url else "Источник: Twitter"
-        
-        return f"{clean_text}\n\n{source_info}\n{signature}"
     
     
     def _process_links(self, text: str) -> str:
@@ -477,7 +464,7 @@ class ContentRewriter:
 - Если исходный пост короткий - 1-2 абзаца
 - Жирный заголовок в начале
 - Только ключевая информация
-- Подпись @ton_boom в конце
+- Подпись @SatoshiNakamoTON добавляется автоматически
 
 ЯЗЫКОВЫЕ ОСОБЕННОСТИ:
 - "ладно", "ну а что"
@@ -578,11 +565,8 @@ class ContentRewriter:
         """Создание резервного поста при ошибке"""
         rewritten_text = self._rewrite_fallback(source_post)
         
-        # Форматируем в зависимости от источника
-        if source_post.source_type == "twitter":
-            final_text = self._format_twitter_post(rewritten_text, [], source_post.original_url)
-        else:
-            final_text = self._format_simple_post(rewritten_text, [])
+        # Форматируем пост
+        final_text = self._format_simple_post(rewritten_text, [])
         
         return RewrittenPost(
             original_post=source_post,
