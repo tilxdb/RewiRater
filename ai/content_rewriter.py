@@ -13,10 +13,7 @@ try:
 except ImportError:
     openai = None
 
-try:
-    import anthropic
-except ImportError:
-    anthropic = None
+ 
 
 from loguru import logger
 
@@ -72,51 +69,13 @@ class ContentRewriter:
         
     
     def setup_ai_clients(self):
-        """Настройка AI клиентов"""
-        if self.config.AI_PROVIDER == "openai" and openai:
-            openai.api_key = self.config.AI_API_KEY
-            self.openai_client = openai.AsyncOpenAI(api_key=self.config.AI_API_KEY)
-            logger.info("OpenAI клиент для переписывания настроен")
-        
-        elif self.config.AI_PROVIDER == "anthropic" and anthropic:
-            self.anthropic_client = anthropic.AsyncAnthropic(api_key=self.config.AI_API_KEY)
-            logger.info("Anthropic клиент для переписывания настроен")
-        
-        elif self.config.AI_PROVIDER == "deepseek" and openai:
-            # DeepSeek использует OpenAI-совместимый API
-            self.deepseek_client = openai.AsyncOpenAI(
-                api_key=self.config.AI_API_KEY,
-                base_url="https://api.deepseek.com"
-            )
-            logger.info("DeepSeek клиент для переписывания настроен")
-        
-        elif self.config.AI_PROVIDER == "groq" and openai:
-            # Groq - бесплатно 14,400 запросов/день
-            self.groq_client = openai.AsyncOpenAI(
-                api_key=self.config.GROQ_API_KEY,
-                base_url="https://api.groq.com/openai/v1"
-            )
-            logger.info("Groq клиент для переписывания настроен (бесплатно)")
-        
-        elif self.config.AI_PROVIDER == "huggingface" and openai:
-            # Hugging Face Inference API - бесплатно 30,000 запросов/месяц
-            # Используем ваш API ключ с правильным endpoint
-            self.huggingface_client = openai.AsyncOpenAI(
-                api_key=self.config.HUGGINGFACE_API_KEY,
-                base_url="https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
-            )
-            logger.info("Hugging Face клиент для переписывания настроен (бесплатно)")
-        
-        elif self.config.AI_PROVIDER == "ollama" and openai:
-            # Ollama - локальный сервер
-            self.ollama_client = openai.AsyncOpenAI(
-                api_key="ollama",  # Не используется, но требуется
-                base_url=self.config.OLLAMA_BASE_URL
-            )
-            logger.info("Ollama клиент для переписывания настроен (локально)")
-        
-        else:
-            logger.warning(f"AI провайдер {self.config.AI_PROVIDER} не поддерживается")
+        """Настройка AI клиентов (только OpenAI)."""
+        if openai is None:
+            logger.error("Библиотека openai не установлена")
+            return
+        openai.api_key = self.config.AI_API_KEY
+        self.openai_client = openai.AsyncOpenAI(api_key=self.config.AI_API_KEY)
+        logger.info("OpenAI клиент для переписывания настроен")
     
     async def rewrite_post(self, source_post: SourcePost) -> RewrittenPost:
         """Переписывает пост под стиль целевого канала"""
@@ -124,20 +83,7 @@ class ContentRewriter:
         start_time = time.time()
         
         try:
-            if self.config.AI_PROVIDER == "openai":
-                rewritten_text = await self._rewrite_with_openai(source_post)
-            elif self.config.AI_PROVIDER == "anthropic":
-                rewritten_text = await self._rewrite_with_anthropic(source_post)
-            elif self.config.AI_PROVIDER == "deepseek":
-                rewritten_text = await self._rewrite_with_deepseek(source_post)
-            elif self.config.AI_PROVIDER == "groq":
-                rewritten_text = await self._rewrite_with_groq(source_post)
-            elif self.config.AI_PROVIDER == "huggingface":
-                rewritten_text = await self._rewrite_with_huggingface(source_post)
-            elif self.config.AI_PROVIDER == "ollama":
-                rewritten_text = await self._rewrite_with_ollama(source_post)
-            else:
-                rewritten_text = self._rewrite_fallback(source_post)
+            rewritten_text = await self._rewrite_with_openai(source_post)
             
             # Очищаем и форматируем текст
             cleaned_text = self._clean_and_format_text(rewritten_text)
@@ -185,105 +131,7 @@ class ContentRewriter:
         
         return response.choices[0].message.content.strip()
     
-    async def _rewrite_with_anthropic(self, source_post: SourcePost) -> str:
-        """Переписывание через Anthropic"""
-        prompt = self._build_rewriting_prompt(source_post)
-        
-        response = await self.anthropic_client.messages.create(
-            model=self.config.AI_MODEL,
-            max_tokens=800,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        return response.content[0].text.strip()
     
-    async def _rewrite_with_deepseek(self, source_post: SourcePost) -> str:
-        """Переписывание через DeepSeek"""
-        prompt = self._build_rewriting_prompt(source_post)
-        
-        response = await self.deepseek_client.chat.completions.create(
-            model=self.config.AI_MODEL,
-            messages=[
-                {"role": "system", "content": self._get_system_prompt()},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content.strip()
-    
-    async def _rewrite_with_groq(self, source_post: SourcePost) -> str:
-        """Переписывание через Groq (бесплатно)"""
-        prompt = self._build_rewriting_prompt(source_post)
-        
-        response = await self.groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",  # Быстрая модель Groq
-            messages=[
-                {"role": "system", "content": self._get_system_prompt()},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content.strip()
-    
-    async def _rewrite_with_huggingface(self, source_post: SourcePost) -> str:
-        """Переписывание через Hugging Face (бесплатно)"""
-        import aiohttp
-        import json
-        
-        # Используем Hugging Face Inference API напрямую
-        url = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium"
-        headers = {
-            "Authorization": f"Bearer {self.config.HUGGINGFACE_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        # Создаем простой промпт для переписывания
-        prompt = f"Перепиши этот пост в стиле крипто-блогера: {source_post.text}"
-        
-        data = {
-            "inputs": prompt,
-            "parameters": {
-                "max_length": 200,
-                "temperature": 0.7,
-                "do_sample": True
-            }
-        }
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(url, headers=headers, json=data) as response:
-                    if response.status == 200:
-                        result = await response.json()
-                        if isinstance(result, list) and len(result) > 0:
-                            return result[0].get("generated_text", source_post.text)
-                        else:
-                            return source_post.text
-                    else:
-                        logger.warning(f"Hugging Face API error: {response.status}")
-                        return self._rewrite_fallback(source_post)
-        except Exception as e:
-            logger.error(f"Hugging Face request error: {e}")
-            return self._rewrite_fallback(source_post)
-    
-    async def _rewrite_with_ollama(self, source_post: SourcePost) -> str:
-        """Переписывание через Ollama (локально)"""
-        prompt = self._build_rewriting_prompt(source_post)
-        
-        response = await self.ollama_client.chat.completions.create(
-            model="llama3.1:8b",  # Локальная модель Ollama
-            messages=[
-                {"role": "system", "content": self._get_system_prompt()},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content.strip()
     
     def _build_rewriting_prompt(self, source_post: SourcePost) -> str:
         """Создание промпта для переписывания"""
