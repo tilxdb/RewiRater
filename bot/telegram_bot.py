@@ -111,13 +111,14 @@ class TelegramUserBot:
                 media_url=post_data.get('media_url')
             )
             
-            # Извлекаем ссылки из исходного поста и отправляем в ЛС себе
+            # Извлекаем ссылки из исходного поста и отправляем в ЛС получателю
             try:
                 links = self.content_rewriter.extract_links(source_post.text)
                 if links:
                     header = f"Ссылки из поста {source_post.id} ({source_post.channel_title}):\n"
                     msg = header + "\n".join(links)
-                    await self.client.send_message(entity='me', message=msg)
+                    recipient = getattr(self.config, 'DM_RECIPIENT', None) or 'me'
+                    await self.client.send_message(entity=recipient, message=msg)
                     logger.info(f"Отправлены {len(links)} ссылок в ЛС")
             except Exception as e:
                 logger.warning(f"Не удалось отправить ссылки в ЛС: {e}")
