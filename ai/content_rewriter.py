@@ -113,23 +113,37 @@ class ContentRewriter:
             
         except Exception as e:
             logger.error(f"Ошибка переписывания поста: {e}")
+            logger.error(f"Тип ошибки: {type(e).__name__}")
+            logger.error(f"Детали: {str(e)}")
+            logger.warning("Используется fallback режим (шаблонный пост). Проверьте логи выше для диагностики.")
             return self._create_fallback_post(source_post)
     
     async def _rewrite_with_openai(self, source_post: SourcePost) -> str:
         """Переписывание через OpenAI"""
+        # Проверяем наличие клиента
+        if not hasattr(self, 'openai_client') or self.openai_client is None:
+            raise Exception("OpenAI клиент не инициализирован. Проверьте API ключ и настройки.")
+        
         prompt = self._build_rewriting_prompt(source_post)
         
-        response = await self.openai_client.chat.completions.create(
-            model=self.config.AI_MODEL,
-            messages=[
-                {"role": "system", "content": self._get_system_prompt()},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=800,
-            temperature=0.7
-        )
-        
-        return response.choices[0].message.content.strip()
+        try:
+            response = await self.openai_client.chat.completions.create(
+                model=self.config.AI_MODEL,
+                messages=[
+                    {"role": "system", "content": self._get_system_prompt()},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=800,
+                temperature=0.7
+            )
+            
+            if not response.choices or not response.choices[0].message.content:
+                raise Exception("OpenAI вернул пустой ответ")
+            
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            logger.error(f"Ошибка вызова OpenAI API: {e}")
+            raise  # Пробрасываем дальше, чтобы было видно в логах
     
     
     
@@ -406,52 +420,44 @@ class ContentRewriter:
     
     def _rewrite_fallback(self, source_post: SourcePost) -> str:
         """Резервное переписывание без AI в стиле автора"""
+        import re
         text = source_post.text
         
         # Удаляем эмодзи из исходного текста
         text = self._remove_emojis_from_text(text)
         
-        # Анализируем исходный текст
-        text_lower = text.lower()
+        # Извлекаем ключевые слова и конкретику из оригинала
+        # Ищем названия проектов (слова с заглавной буквы)
+        projects = re.findall(r'\b[A-Z][a-zA-Z]+\b', text)
+        # Ищем цифры
+        numbers = re.findall(r'\d+[.,]\d+|\d+', text)
+        # Ищем даты
+        dates = re.findall(r'\d+\s*(?:ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября)|(?:ноября|декабря|января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября)\s*\d+', text, re.IGNORECASE)
         
-        # Определяем тему
-        if any(word in text_lower for word in ["bitcoin", "крипт", "токен", "монет"]):
-            topic = "криптовалюты"
-        elif any(word in text_lower for word in ["ton", "телеграм", "telegram"]):
-            topic = "TON экосистемы"
-        elif any(word in text_lower for word in ["игра", "gamefi", "nft"]):
-            topic = "игровых проектов"
-        elif any(word in text_lower for word in ["бирж", "трейд", "торг"]):
-            topic = "трейдинга"
+        # Создаем заголовок на основе конкретных слов из текста
+        text_words = text.split()
+        # Берем первые значимые слова (пропускаем служебные)
+        significant_words = [w for w in text_words[:10] if len(w) > 3 and not w.lower() in ['это', 'что', 'для', 'как', 'или', 'был', 'был', 'есть']]
+        
+        if projects:
+            # Используем название проекта для заголовка
+            header = f"<b>{projects[0]}</b>"
+        elif significant_words:
+            # Используем ключевые слова из текста
+            header_keyword = significant_words[0].capitalize()
+            header = f"<b>{header_keyword}</b>"
         else:
-            topic = "интересных новостей"
+            header = "<b>Важная информация</b>"
         
-        # Создаем строгий заголовок в стиле автора
-        headers = [
-            f"<b>Анализ {topic}</b>",
-            f"<b>Обзор {topic}</b>",
-            f"<b>Новости {topic}</b>",
-            f"<b>Тенденции {topic}</b>",
-            f"<b>Развитие {topic}</b>"
-        ]
+        # Сохраняем оригинальный текст с минимальной обработкой (только форматирование)
+        # Это лучше, чем генерировать шаблоны
+        cleaned_text = re.sub(r'\n+', '\n\n', text.strip())
         
-        import random
-        header = random.choice(headers)
+        # Если текст слишком длинный, обрезаем
+        if len(cleaned_text) > 500:
+            cleaned_text = cleaned_text[:500] + "..."
         
-        # ПЕРЕПИСЫВАЕМ текст в стиле автора, а не копируем
-        rewritten_content = self._rewrite_content_in_style(text, topic)
-        
-        # Добавляем краткие стилевые элементы
-        style_elements = [
-            "\n\nСледим за развитием.",
-            "\n\nАнализируем тренды.",
-            "\n\nИнтересная ситуация.",
-            "\n\nВажно понимать."
-        ]
-        
-        style_element = random.choice(style_elements)
-        
-        return f"{header}\n\n{rewritten_content}{style_element}"
+        return f"{header}\n\n{cleaned_text}"
     
     def _rewrite_content_in_style(self, original_text: str, topic: str) -> str:
         """Переписывает контент в профессиональном стиле"""
