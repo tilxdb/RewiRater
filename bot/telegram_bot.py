@@ -111,17 +111,29 @@ class TelegramUserBot:
                 media_url=post_data.get('media_url')
             )
             
-            # Извлекаем ссылки из исходного поста и отправляем в ЛС получателю
+            # Отправляем в ЛС ссылку на оригинальный пост и ссылки из него
             try:
+                recipient = getattr(self.config, 'DM_RECIPIENT', None) or 'me'
+                
+                # Формируем ссылку на оригинальный пост
+                post_url = source_post.url
+                if not post_url:
+                    # Если URL нет, формируем ссылку через channel_title (убираем @ если есть)
+                    channel_name = source_post.channel_title.replace('@', '').replace(' ', '')
+                    post_url = f"https://t.me/{channel_name}/{source_post.id}"
+                
+                # Извлекаем ссылки из поста
                 links = self.content_rewriter.extract_links(source_post.text)
+                
+                # Формируем сообщение
+                msg = f"📝 Оригинальный пост: {post_url}"
                 if links:
-                    header = f"Ссылки из поста {source_post.id} ({source_post.channel_title}):\n"
-                    msg = header + "\n".join(links)
-                    recipient = getattr(self.config, 'DM_RECIPIENT', None) or 'me'
-                    await self.client.send_message(entity=recipient, message=msg)
-                    logger.info(f"Отправлены {len(links)} ссылок в ЛС")
+                    msg += f"\n\n🔗 Ссылки из поста ({len(links)}):\n" + "\n".join(links)
+                
+                await self.client.send_message(entity=recipient, message=msg)
+                logger.info(f"Отправлена ссылка на пост и {len(links) if links else 0} ссылок в ЛС")
             except Exception as e:
-                logger.warning(f"Не удалось отправить ссылки в ЛС: {e}")
+                logger.warning(f"Не удалось отправить ссылку на пост и ссылки в ЛС: {e}")
 
             # Переписываем пост под стиль целевого канала
             logger.info("Начинаем переписывание поста...")
