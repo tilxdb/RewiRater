@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# ✅ Модель OpenAI обновлена на gpt-4o-mini (по умолчанию)
 """
 Запуск Telegram монитора
 """
@@ -24,8 +25,22 @@ async def run_telegram_bot():
         logger.info("🚀 Запуск Telegram бота...")
         
         config = Config()
+        config.load_from_env()
+        
+        # Проверяем наличие API ключа
+        if not config.AI_API_KEY:
+            logger.error("❌ Не указан AI_API_KEY в config.py или переменных окружения")
+            return
+        
+        # Инициализируем переписыватель (setup_ai_clients вызывается автоматически в __init__)
         content_rewriter = ContentRewriter(config)
-        await content_rewriter.setup_ai_clients()
+        
+        # Проверяем, что клиент создан
+        if not hasattr(content_rewriter, 'openai_client') or content_rewriter.openai_client is None:
+            logger.error("❌ OpenAI клиент не создан! Проверьте API ключ.")
+            return
+        
+        logger.info("✅ OpenAI клиент успешно инициализирован")
         
         bot = TelegramUserBot(config, content_rewriter)
         await bot.start()

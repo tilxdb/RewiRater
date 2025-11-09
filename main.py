@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# ✅ Модель OpenAI обновлена на gpt-4o-mini (по умолчанию)
 """
 AI Копирайтер для Telegram канала через User Bot
 RewiRater - автоматическая генерация и публикация контента
@@ -35,10 +36,16 @@ async def main():
             logger.error("Не указан AI_API_KEY")
             return
         
-        # Инициализируем переписыватель контента
+        # Инициализируем переписыватель контента (setup_ai_clients вызывается автоматически в __init__)
         logger.info("Инициализация AI переписывателя...")
         content_rewriter = ContentRewriter(config)
-        content_rewriter.setup_ai_clients()
+        
+        # Проверяем, что клиент создан
+        if not hasattr(content_rewriter, 'openai_client') or content_rewriter.openai_client is None:
+            logger.error("❌ OpenAI клиент не создан! Проверьте API ключ в config.py")
+            return
+        
+        logger.info("✅ OpenAI клиент успешно инициализирован")
         
         # Инициализируем Telegram User Bot
         logger.info("Инициализация Telegram бота...")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# ✅ Модель OpenAI обновлена на gpt-4o-mini (по умолчанию)
 """
 Переписывание контента из каналов-источников под стиль целевого канала
 """
@@ -53,6 +54,9 @@ class ContentRewriter:
     
     def __init__(self, config):
         self.config = config
+        self.default_model = "gpt-4o-mini"
+        logger.info(f"✅ Используется модель по умолчанию: {self.default_model}")
+        self.model_name = getattr(self.config, "AI_MODEL", self.default_model)
         self.setup_ai_clients()
         
         # Стиль переписывания (будет настраиваться позже)
@@ -71,11 +75,22 @@ class ContentRewriter:
     def setup_ai_clients(self):
         """Настройка AI клиентов (только OpenAI)."""
         if openai is None:
-            logger.error("Библиотека openai не установлена")
+            logger.error("❌ Библиотека openai не установлена. Установите: pip install openai")
             return
-        openai.api_key = self.config.AI_API_KEY
-        self.openai_client = openai.AsyncOpenAI(api_key=self.config.AI_API_KEY)
-        logger.info("OpenAI клиент для переписывания настроен")
+        
+        if not self.config.AI_API_KEY:
+            logger.error("❌ AI_API_KEY не указан в config.py")
+            return
+        
+        try:
+            openai.api_key = self.config.AI_API_KEY
+            self.model_name = getattr(self.config, "AI_MODEL", self.default_model)
+            self.openai_client = openai.AsyncOpenAI(api_key=self.config.AI_API_KEY)
+            logger.info(f"✅ OpenAI клиент для переписывания настроен (модель: {self.model_name})")
+            logger.debug(f"API ключ: {self.config.AI_API_KEY[:10]}...{self.config.AI_API_KEY[-10:]}")
+        except Exception as e:
+            logger.error(f"❌ Ошибка создания OpenAI клиента: {e}")
+            self.openai_client = None
     
     async def rewrite_post(self, source_post: SourcePost) -> RewrittenPost:
         """Переписывает пост под стиль целевого канала"""
@@ -104,7 +119,7 @@ class ContentRewriter:
                 hashtags=[],
                 style=self.rewriting_style["tone"],
                 provider=self.config.AI_PROVIDER,
-                model=self.config.AI_MODEL,
+                model=getattr(self.config, "AI_MODEL", self.default_model),
                 media_type=source_post.media_type,
                 media_object=source_post.media_object,
                 media_url=source_post.media_url,
@@ -128,7 +143,7 @@ class ContentRewriter:
         
         try:
             response = await self.openai_client.chat.completions.create(
-                model=self.config.AI_MODEL,
+                model=getattr(self.config, "AI_MODEL", self.default_model),
                 messages=[
                     {"role": "system", "content": self._get_system_prompt()},
                     {"role": "user", "content": prompt}
@@ -494,7 +509,7 @@ class ContentRewriter:
             hashtags=[],
             style="fallback",
             provider="fallback",
-            model="template",
+            model=getattr(self.config, "AI_MODEL", self.default_model),
             media_type=source_post.media_type,
             media_object=source_post.media_object,
             media_url=source_post.media_url,
