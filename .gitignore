@@ -82,3 +82,6 @@ docs/temp/
 # Backup files
 *.bak
 *.backup
+
+# Exported examples (local data)
+examples/*.txt

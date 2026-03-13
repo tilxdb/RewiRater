@@ -187,7 +187,7 @@ TWITTER_ACCOUNTS = [
 ```python
 def _build_rewriting_prompt(self, source_post: SourcePost) -> str:
     prompt = f"""
-    ТЫ ДОЛЖЕН ПОЛНОСТЬЮ ПЕРЕПИСАТЬ этот пост в стиле автора @thedegeton.
+    ТЫ ДОЛЖЕН ПОЛНОСТЬЮ ПЕРЕПИСАТЬ этот пост в стиле автора @marxstud.
     # ... ваш стиль
     """
     return prompt
